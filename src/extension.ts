@@ -1,152 +1,33 @@
 "use strict";
-import {
-  window,
-  commands,
-  ExtensionContext,
-  StatusBarItem,
-  StatusBarAlignment,
-  ViewColumn,
-  WebviewPanel
-} from "vscode";
-import * as fs from "fs";
-import * as path from "path";
-import * as request from "request";
+import { ExtensionContext } from "vscode";
+import ShepherdService from "./services/shepherd";
+import LogViewService from "./services/log-view/log-view";
+import StatusIconsService from "./services/status-icons";
+import CommandsService from "./services/commands";
 
-let robotRunIcon: StatusBarItem;
+export function activate(context: ExtensionContext): void {
+  // function checkImage() {
+  //   if (currentPanel) {
+  //     currentPanel.webview.postMessage({
+  //       event: "image",
+  //       data: `http://localhost:4000/static/output.jpg?nocache=${Date.now()}`
+  //     });
+  //   }
+  // }
 
-export function activate(context: ExtensionContext) {
-  const registerCommand = (
-    command: string,
-    callback: (...args: any[]) => any
-  ) => commands.registerCommand(command, callback);
-
-  let currentPanel: WebviewPanel | undefined = undefined;
-  let currentLog = "";
-
-  function checkLog() {
-    request.get("http://localhost:4000/run/output", (err, res) => {
-      if (err) {
-        window.showErrorMessage("Unable to connect to robot!");
-        if (currentPanel) {
-          currentPanel.webview.postMessage({
-            event: "no-connection"
-          });
-        }
-      } else {
-        const newLog = res.body;
-
-        if (
-          newLog.length < currentLog.length ||
-          newLog.substring(0, currentLog.length) !== currentLog
-        ) {
-          currentLog = newLog;
-          if (currentPanel) {
-            currentPanel.webview.postMessage({
-              event: "log-set",
-              data: currentLog
-            });
-          }
-        } else {
-          const newLogPart = newLog.substring(currentLog.length, newLog.length);
-          if (currentPanel && newLogPart) {
-            currentPanel.webview.postMessage({
-              event: "log-append",
-              data: newLogPart
-            });
-          }
-          currentLog = newLog;
-        }
-      }
-    });
-  }
-
-  function checkImage() {
-    if (currentPanel) {
-      currentPanel.webview.postMessage({
-        event: "image",
-        data: `http://localhost:4000/static/output.jpg?nocache=${Date.now()}`
-      });
-    }
-  }
-
-  const runRegistration = registerCommand("robot.run", () => {
-    // window.showInformationMessage("Running on robot...");
-
-    if (currentPanel) {
-      currentPanel.reveal(ViewColumn.Two);
-      checkLog();
-      checkImage();
-    } else {
-      currentLog = "";
-      currentPanel = window.createWebviewPanel(
-        "robot-logs",
-        "Robot Logs",
-        ViewColumn.Two,
-        {
-          /*This is pretty dangerous, but it's a private extension, and it's not
-          like people are going to put script tags in their logs... right?*/
-          enableScripts: true
-        }
-      );
-
-      const logHTML: string = fs.readFileSync(
-        context.asAbsolutePath(path.join("src", "log.html")),
-        { encoding: "utf8" }
-      );
-
-      currentPanel.webview.html = logHTML;
-
-      currentPanel.webview.onDidReceiveMessage(
-        msg => {
-          const handleEvent = (eventName: string, handler: () => void) => {
-            if (msg.event === "loaded" || msg.event === eventName) {
-              setTimeout(handler, msg.event === "loaded" ? 0 : 500);
-            }
-          };
-
-          handleEvent("request-log", checkLog);
-          handleEvent("image-loaded", checkImage);
-        },
-        undefined,
-        context.subscriptions
-      );
-
-      currentPanel.onDidDispose(
-        () => {
-          currentPanel = undefined;
-        },
-        null,
-        context.subscriptions
-      );
-    }
-  });
-
-  const stopRegistration = registerCommand("robot.stop", () => {
-    // window.showInformationMessage("Stopping robot...");
-  });
-
-  robotRunIcon = window.createStatusBarItem(StatusBarAlignment.Left);
-  robotRunIcon.text = "$(triangle-right) Run on Robot";
-  robotRunIcon.command = "robot.run";
-  robotRunIcon.show();
-  // const textEditorChanges = window.onDidChangeActiveTextEditor(
-  //   updateRobotRunIcon
-  // );
-  // updateRobotRunIcon();
+  const shepherdService: ShepherdService = new ShepherdService();
+  const logViewService: LogViewService = new LogViewService(
+    context,
+    shepherdService
+  );
+  const statusIconsService: StatusIconsService = new StatusIconsService();
+  const commandsService: CommandsService = new CommandsService(logViewService);
 
   context.subscriptions.push(
-    runRegistration,
-    stopRegistration,
-    robotRunIcon
-    //textEditorChanges
+    logViewService,
+    statusIconsService,
+    commandsService
   );
 }
 
-// function updateRobotRunIcon() {
-//   const editor = window.activeTextEditor;
-//   robotRunIcon[
-//     editor && editor.document.languageId === "python" ? "show" : "hide"
-//   ]();
-// }
-
-export function deactivate() {}
+export function deactivate(): void {}

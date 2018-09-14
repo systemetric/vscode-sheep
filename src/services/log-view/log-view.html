@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Robot Logs</title>
+
+  <style>
+    body {
+      padding: 0;
+    }
+
+    .photo {
+      width: 100vw;
+      height: 56.25vw;
+
+      background-position: center;
+      background-size: contain;
+      background-repeat: no-repeat;
+
+      position: relative;
+    }
+
+    .photo>div {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .photo>div>svg {
+      width: 60px;
+      height: 60px;
+      fill: var(--color);
+    }
+
+    .photo>div.no-connection>svg {
+      transform-origin: center;
+      transform: rotate(-45deg);
+    }
+
+    .photo>div>h2,
+    .photo>div>p {
+      text-align: center;
+    }
+
+    .photo>div>h2 {
+      margin-bottom: 0;
+    }
+
+    .photo>div>p {
+      max-width: 250px;
+    }
+
+    .log {
+      width: calc(100vw - 2rem);
+      height: calc(100vh - 56.25vw - 2rem);
+      padding: 1rem;
+      overflow-y: scroll;
+    }
+
+    .log>pre {
+      margin: 0;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="photo">
+    <div class="loading" style="display: flex">
+      <svg width="256" height="256" viewBox="0 0 10 16" version="1.1" aria-hidden="true">
+        <path fill-rule="evenodd" d="M10 7H6l3-7-9 9h4l-3 7 9-9z"></path>
+      </svg>
+      <h2>Loading...</h2>
+    </div>
+    <div class="no-connection" style="display: none">
+      <svg width="256" height="256" viewBox="0 0 10 16" version="1.1" aria-hidden="true">
+        <path fill-rule="evenodd" d="M2 13H0v-2c1.11 0 2 .89 2 2zM0 3v1a9 9 0 0 1 9 9h1C10 7.48 5.52 3 0 3zm0 4v1c2.75 0 5 2.25 5 5h1c0-3.31-2.69-6-6-6z"></path>
+      </svg>
+      <h2>No connection!</h2>
+      <p>Make sure you're connected to your robot's Wi-Fi network</p>
+      <button>Retry</button>
+    </div>
+  </div>
+
+  <div class="log">
+    <pre><code></code></pre>
+  </div>
+
+  <script>
+    const vscode = acquireVsCodeApi();
+
+    /*
+     * DOM NODES
+     */
+    const photoNode = document.querySelector(".photo");
+    const loadingInfoNode = document.querySelector(".loading");
+    const noConnectionInfoNode = document.querySelector(".no-connection");
+    const retryButton = document.querySelector(".no-connection button");
+    const logContainerNode = document.querySelector(".log");
+    const logPreNode = document.querySelector(".log pre");
+    const logNode = document.querySelector(".log pre code");
+
+    /*
+     * STATE
+     */
+    let state = vscode.getState() || {
+      photo: "",
+      connected: false,
+      log: ""
+    };
+
+    function updateState(update) {
+      state = {
+        ...state,
+        ...update
+      };
+      updateInfo();
+      vscode.setState(state);
+    }
+
+    state.photo && (photoNode.style.backgroundImage = `url("${state.photo}")`);
+    state.log && (logNode.innerHTML = state.log);
+
+    let autoScroll = true;
+
+    /*
+     * INFORMATION UPDATING
+     */
+    function updateInfo() {
+      noConnectionInfoNode.style.display = !state.connected ? "flex" : "none";
+      loadingInfoNode.style.display = state.connected && !state.photo ? "flex" : "none";
+    }
+    updateInfo();
+
+    /*
+     * MESSAGE HANDLING
+     */
+    function sendRequestMessage(type) {
+      setTimeout(() => vscode.postMessage({ event: `request-${type}` }), 500);
+    }
+
+    window.addEventListener("message", e => {
+      const msg = e.data;
+      switch (msg.event) {
+        case "log":
+          updateState({ connected: true });
+          if (msg.data.append) {
+            logNode.appendChild(document.createTextNode(msg.data.log));
+            updateState({ log: state.log + msg.data.log });
+          } else {
+            logNode.innerHTML = msg.data.log;
+            updateState({ log: msg.data.log });
+          }
+          autoScroll && (logContainerNode.scrollTop = logContainerNode.scrollHeight);
+          sendRequestMessage("log");
+          break;
+        case "image":
+          updateState({ connected: true });
+          const newPhoto = new Image();
+          newPhoto.onload = function () {
+            photoNode.style.backgroundImage = `url("${this.src}")`;
+            updateState({ photo: this.src });
+            sendRequestMessage("image");
+          };
+          newPhoto.src = msg.data;
+          break;
+        case "no-connection":
+          updateState({ connected: false, photo: "" });
+          photoNode.style.backgroundImage = undefined;
+          break;
+      }
+    });
+
+    /*
+     * AUTO-SCROLL AUTO-DISABLE
+     */
+    logPreNode.addEventListener("mouseenter", () => autoScroll = false);
+    logPreNode.addEventListener("mousemove", () => autoScroll = false);
+    logPreNode.addEventListener("mouseleave", () => autoScroll = true);
+
+    /*
+     * INIT
+     */
+    function init() {
+      vscode.postMessage({ event: "request-image" });
+      vscode.postMessage({ event: "request-log" });
+    }
+    init();
+
+    retryButton.addEventListener("click", e => {
+      updateState({ connected: true });
+      init();
+    });
+  </script>
+</body>
+
+</html>
