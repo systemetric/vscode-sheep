@@ -16,16 +16,6 @@
       width: 100vw;
       height: 56.25vw;
 
-      position: relative;
-    }
-
-    .camera>div {
-      position: absolute;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      right: 0;
-
       background-position: center;
       background-size: contain;
       background-repeat: no-repeat;
@@ -46,40 +36,62 @@
 </head>
 
 <body>
-  <div class="camera">
-    <div style="background-image: url('https://via.placeholder.com/1280x720')"></div>
-    <div style="background-image: url('https://via.placeholder.com/1280x720'); display: none;"></div>
-  </div>
+  <div class="camera"></div>
 
   <div class="log">
     <pre><code></code></pre>
   </div>
 
   <script>
-    const logContainer = document.querySelector(".log");
-    const logPre = logContainer.querySelector("pre");
-    const log = logPre.querySelector("code");
+    (function () {
+      const vscode = acquireVsCodeApi();
 
-    let autoScroll = true;
-    const doAutoScroll = () => autoScroll && (logContainer.scrollTop = logContainer.scrollHeight);
+      const camera = document.querySelector(".camera");
+      const logContainer = document.querySelector(".log");
+      const logPre = logContainer.querySelector("pre");
+      const log = logPre.querySelector("code");
 
-    window.addEventListener("message", e => {
-      const msg = e.data;
-      switch (msg.event) {
-        case "log-set":
-          log.innerHTML = msg.data.toString();
-          doAutoScroll();
-          break;
-        case "log-append":
-          log.appendChild(document.createTextNode(msg.data.toString()));
-          doAutoScroll();
-          break;
-      }
-    });
+      let autoScroll = true;
+      const doAutoScroll = () => autoScroll && (logContainer.scrollTop = logContainer.scrollHeight);
 
-    logPre.addEventListener("mouseenter", () => autoScroll = false);
-    logPre.addEventListener("mousemove", () => autoScroll = false);
-    logPre.addEventListener("mouseleave", () => autoScroll = true);
+      window.addEventListener("message", e => {
+        const msg = e.data;
+        switch (msg.event) {
+          case "log-set":
+            log.innerHTML = msg.data.toString();
+            doAutoScroll();
+            break;
+          case "log-append":
+            log.appendChild(document.createTextNode(msg.data.toString()));
+            doAutoScroll();
+            break;
+          case "image":
+            const newImage = new Image();
+            newImage.onload = function () {
+              camera.style.backgroundImage = `url("${this.src}")`;
+              vscode.postMessage({
+                event: "image-loaded"
+              });
+            };
+            newImage.src = msg.data;
+            break;
+        }
+      });
+
+      logPre.addEventListener("mouseenter", () => autoScroll = false);
+      logPre.addEventListener("mousemove", () => autoScroll = false);
+      logPre.addEventListener("mouseleave", () => autoScroll = true);
+
+      vscode.postMessage({
+        event: "loaded"
+      });
+
+      setInterval(() => {
+        vscode.postMessage({
+          event: "request-log"
+        });
+      }, 1000);
+    })();
   </script>
 </body>
 

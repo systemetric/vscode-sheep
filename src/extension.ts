@@ -10,6 +10,7 @@ import {
 } from "vscode";
 import * as fs from "fs";
 import * as path from "path";
+import * as request from "request";
 
 let robotRunIcon: StatusBarItem;
 
@@ -20,23 +21,47 @@ export function activate(context: ExtensionContext) {
   ) => commands.registerCommand(command, callback);
 
   let currentPanel: WebviewPanel | undefined = undefined;
-  let i = 0;
-  setInterval(() => {
-    i++;
-    if (currentPanel) {
-      currentPanel.webview.postMessage({
-        event: "log-set",
-        data: `${i}\n`
-      });
-    }
-  }, 1000);
+  let currentLog = "";
+
+  function checkLog() {
+    request.get("http://localhost:4000/run/output", (err, res) => {
+      if (err) {
+        window.showErrorMessage("Unable to connect to robot!");
+      } else {
+        const newLog = res.body;
+
+        if (
+          newLog.length < currentLog.length ||
+          newLog.substring(0, currentLog.length) !== currentLog
+        ) {
+          currentLog = newLog;
+          if (currentPanel) {
+            currentPanel.webview.postMessage({
+              event: "log-set",
+              data: currentLog
+            });
+          }
+        } else {
+          const newLogPart = newLog.substring(currentLog.length, newLog.length);
+          if (currentPanel && newLogPart) {
+            currentPanel.webview.postMessage({
+              event: "log-append",
+              data: newLogPart
+            });
+          }
+          currentLog = newLog;
+        }
+      }
+    });
+  }
 
   const runRegistration = registerCommand("robot.run", () => {
-    window.showInformationMessage("Running on robot...");
+    // window.showInformationMessage("Running on robot...");
 
     if (currentPanel) {
       currentPanel.reveal(ViewColumn.Two);
     } else {
+      currentLog = "";
       currentPanel = window.createWebviewPanel(
         "robot-logs",
         "Robot Logs",
@@ -54,6 +79,25 @@ export function activate(context: ExtensionContext) {
       );
 
       currentPanel.webview.html = logHTML;
+
+      currentPanel.webview.onDidReceiveMessage(
+        msg => {
+          checkLog();
+          if (msg.event === "loaded" || msg.event === "image-loaded") {
+            setTimeout(() => {
+              if (currentPanel) {
+                currentPanel.webview.postMessage({
+                  event: "image",
+                  data: `http://localhost:4000/static/output.jpg?nocache=${Date.now()}`
+                });
+              }
+            }, msg.event === "image-loaded" ? 500 : 0);
+          }
+        },
+        undefined,
+        context.subscriptions
+      );
+
       currentPanel.onDidDispose(
         () => {
           currentPanel = undefined;
@@ -65,7 +109,7 @@ export function activate(context: ExtensionContext) {
   });
 
   const stopRegistration = registerCommand("robot.stop", () => {
-    window.showInformationMessage("Stopping robot...");
+    // window.showInformationMessage("Stopping robot...");
   });
 
   robotRunIcon = window.createStatusBarItem(StatusBarAlignment.Left);
