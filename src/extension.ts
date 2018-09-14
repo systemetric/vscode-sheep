@@ -27,6 +27,11 @@ export function activate(context: ExtensionContext) {
     request.get("http://localhost:4000/run/output", (err, res) => {
       if (err) {
         window.showErrorMessage("Unable to connect to robot!");
+        if (currentPanel) {
+          currentPanel.webview.postMessage({
+            event: "no-connection"
+          });
+        }
       } else {
         const newLog = res.body;
 
@@ -55,11 +60,22 @@ export function activate(context: ExtensionContext) {
     });
   }
 
+  function checkImage() {
+    if (currentPanel) {
+      currentPanel.webview.postMessage({
+        event: "image",
+        data: `http://localhost:4000/static/output.jpg?nocache=${Date.now()}`
+      });
+    }
+  }
+
   const runRegistration = registerCommand("robot.run", () => {
     // window.showInformationMessage("Running on robot...");
 
     if (currentPanel) {
       currentPanel.reveal(ViewColumn.Two);
+      checkLog();
+      checkImage();
     } else {
       currentLog = "";
       currentPanel = window.createWebviewPanel(
@@ -82,17 +98,14 @@ export function activate(context: ExtensionContext) {
 
       currentPanel.webview.onDidReceiveMessage(
         msg => {
-          checkLog();
-          if (msg.event === "loaded" || msg.event === "image-loaded") {
-            setTimeout(() => {
-              if (currentPanel) {
-                currentPanel.webview.postMessage({
-                  event: "image",
-                  data: `http://localhost:4000/static/output.jpg?nocache=${Date.now()}`
-                });
-              }
-            }, msg.event === "image-loaded" ? 500 : 0);
-          }
+          const handleEvent = (eventName: string, handler: () => void) => {
+            if (msg.event === "loaded" || msg.event === eventName) {
+              setTimeout(handler, msg.event === "loaded" ? 0 : 500);
+            }
+          };
+
+          handleEvent("request-log", checkLog);
+          handleEvent("image-loaded", checkImage);
         },
         undefined,
         context.subscriptions

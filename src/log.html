@@ -53,17 +53,23 @@
 
       let autoScroll = true;
       const doAutoScroll = () => autoScroll && (logContainer.scrollTop = logContainer.scrollHeight);
+      const doHandleLog = () => {
+        doAutoScroll();
+        vscode.postMessage({
+          event: "request-log"
+        });
+      }
 
       window.addEventListener("message", e => {
         const msg = e.data;
         switch (msg.event) {
           case "log-set":
             log.innerHTML = msg.data.toString();
-            doAutoScroll();
+            doHandleLog();
             break;
           case "log-append":
             log.appendChild(document.createTextNode(msg.data.toString()));
-            doAutoScroll();
+            doHandleLog();
             break;
           case "image":
             const newImage = new Image();
@@ -85,12 +91,6 @@
       vscode.postMessage({
         event: "loaded"
       });
-
-      setInterval(() => {
-        vscode.postMessage({
-          event: "request-log"
-        });
-      }, 1000);
     })();
   </script>
 </body>
