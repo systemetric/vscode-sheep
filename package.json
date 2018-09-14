@@ -36,7 +36,9 @@
     "postinstall": "node ./node_modules/vscode/bin/install"
   },
   "devDependencies": {
+    "@types/archiver": "^2.1.2",
     "@types/axios": "^0.14.0",
+    "@types/fs-extra": "^5.0.4",
     "@types/node": "^8.10.25",
     "mock-shepherd": "github:systemetric/mock-shepherd",
     "tslint": "^5.8.0",
@@ -44,6 +46,8 @@
     "vscode": "^1.1.21"
   },
   "dependencies": {
-    "axios": "^0.18.0"
+    "archiver": "^3.0.0",
+    "axios": "^0.18.0",
+    "fs-extra": "^7.0.0"
   }
 }

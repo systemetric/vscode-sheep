@@ -3,6 +3,7 @@ import { ExtensionContext } from "vscode";
 import ShepherdService from "./services/shepherd";
 import LogViewService from "./services/log-view/log-view";
 import StatusIconsService from "./services/status-icons";
+import ZipperService from "./services/zipper";
 import CommandsService from "./services/commands";
 
 export function activate(context: ExtensionContext): void {
@@ -20,8 +21,14 @@ export function activate(context: ExtensionContext): void {
     context,
     shepherdService
   );
-  const statusIconsService: StatusIconsService = new StatusIconsService();
-  const commandsService: CommandsService = new CommandsService(logViewService);
+  const statusIconsService: StatusIconsService = new StatusIconsService(
+    context
+  );
+  const zipperService: ZipperService = new ZipperService(context);
+  const commandsService: CommandsService = new CommandsService(
+    logViewService,
+    zipperService
+  );
 
   context.subscriptions.push(
     logViewService,
