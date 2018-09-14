@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Robot Logs</title>
+
+  <style>
+    body {
+      padding: 0;
+    }
+
+    .camera {
+      width: 100vw;
+      height: 56.25vw;
+
+      position: relative;
+    }
+
+    .camera>div {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+
+      background-position: center;
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
+
+    .log {
+      width: calc(100vw - 2rem);
+      height: calc(100vh - 56.25vw - 2rem);
+      padding: 1rem;
+      overflow-y: scroll;
+    }
+
+    .log>pre {
+      margin: 0;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="camera">
+    <div style="background-image: url('https://via.placeholder.com/1280x720')"></div>
+    <div style="background-image: url('https://via.placeholder.com/1280x720'); display: none;"></div>
+  </div>
+
+  <div class="log">
+    <pre><code></code></pre>
+  </div>
+
+  <script>
+    const logContainer = document.querySelector(".log");
+    const logPre = logContainer.querySelector("pre");
+    const log = logPre.querySelector("code");
+
+    let autoScroll = true;
+    const doAutoScroll = () => autoScroll && (logContainer.scrollTop = logContainer.scrollHeight);
+
+    window.addEventListener("message", e => {
+      const msg = e.data;
+      switch (msg.event) {
+        case "log-set":
+          log.innerHTML = msg.data.toString();
+          doAutoScroll();
+          break;
+        case "log-append":
+          log.appendChild(document.createTextNode(msg.data.toString()));
+          doAutoScroll();
+          break;
+      }
+    });
+
+    logPre.addEventListener("mouseenter", () => autoScroll = false);
+    logPre.addEventListener("mousemove", () => autoScroll = false);
+    logPre.addEventListener("mouseleave", () => autoScroll = true);
+  </script>
+</body>
+
+</html>
