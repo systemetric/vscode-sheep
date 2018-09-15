@@ -45,6 +45,7 @@ export default class LogViewService implements Disposable {
   public show(): void {
     if (this._panel) {
       this._panel.reveal(ViewColumn.Two);
+      this._postMessage("re-init-if-required");
     } else {
       this.shepherd.resetLog();
       this._panel = window.createWebviewPanel(

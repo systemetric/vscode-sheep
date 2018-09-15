@@ -178,6 +178,11 @@
           updateState({ connected: false, photo: "" });
           photoNode.style.backgroundImage = null;
           break;
+        case "re-init-if-required":
+          if (!state.connected) {
+            retry();
+          }
+          break;
       }
     });
 
@@ -197,10 +202,11 @@
     }
     init();
 
-    retryButton.addEventListener("click", e => {
+    function retry() {
       updateState({ connected: true });
       init();
-    });
+    }
+    retryButton.addEventListener("click", retry);
   </script>
 </body>
 

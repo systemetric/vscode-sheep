@@ -19,6 +19,7 @@ export function activate(context: ExtensionContext): void {
   const commandsService: CommandsService = new CommandsService(
     shepherdService,
     logViewService,
+    //statusIconsService,
     zipperService
   );
 
