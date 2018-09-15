@@ -7,15 +7,6 @@ import ZipperService from "./services/zipper";
 import CommandsService from "./services/commands";
 
 export function activate(context: ExtensionContext): void {
-  // function checkImage() {
-  //   if (currentPanel) {
-  //     currentPanel.webview.postMessage({
-  //       event: "image",
-  //       data: `http://localhost:4000/static/output.jpg?nocache=${Date.now()}`
-  //     });
-  //   }
-  // }
-
   const shepherdService: ShepherdService = new ShepherdService();
   const logViewService: LogViewService = new LogViewService(
     context,
@@ -26,6 +17,7 @@ export function activate(context: ExtensionContext): void {
   );
   const zipperService: ZipperService = new ZipperService(context);
   const commandsService: CommandsService = new CommandsService(
+    shepherdService,
     logViewService,
     zipperService
   );

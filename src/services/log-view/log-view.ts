@@ -38,6 +38,10 @@ export default class LogViewService implements Disposable {
     }
   }
 
+  public showNoConnection(): void {
+    this._postMessage("no-connection");
+  }
+
   public show(): void {
     if (this._panel) {
       this._panel.reveal(ViewColumn.Two);
@@ -64,7 +68,7 @@ export default class LogViewService implements Disposable {
           case "request-log":
             const log = await this.shepherd.getLog();
             if (log.err) {
-              this._postMessage("no-connection");
+              this.showNoConnection();
             } else {
               this._postMessage("log", log);
             }

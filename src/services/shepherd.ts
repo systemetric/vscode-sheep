@@ -1,4 +1,12 @@
-import * as axios from "axios";
+import {
+  defaults as requestDefaults,
+  RequestAPI,
+  Request,
+  CoreOptions,
+  RequiredUriUrl,
+  Response
+} from "request";
+import * as fs from "fs";
 
 export interface ILog {
   append: boolean;
@@ -8,14 +16,54 @@ export interface ILog {
 
 export default class ShepherdService {
   private _baseURL: string;
-  private _http: axios.AxiosInstance;
+  private _http: RequestAPI<Request, CoreOptions, RequiredUriUrl>;
   private _currentLog: string = "";
 
   constructor() {
     this._baseURL = "http://localhost:4000";
-    this._http = axios.default.create({
-      baseURL: this._baseURL
+    this._http = requestDefaults({
+      baseUrl: this._baseURL
     });
+  }
+
+  private _request(
+    method: string,
+    uri: string,
+    options?: CoreOptions
+  ): Promise<Response> {
+    return new Promise<Response>((resolve, reject) => {
+      this._http(
+        uri,
+        {
+          method,
+          ...options
+        },
+        (err: any, res: Response) => {
+          err ? reject(err) : resolve(res);
+        }
+      );
+    });
+  }
+
+  public upload(path: string): Promise<Response> {
+    return this._request("POST", "/upload/upload", {
+      formData: {
+        uploaded_file: fs.createReadStream(path)
+      }
+    });
+  }
+
+  public start(): Promise<Response> {
+    return this._request("POST", "/run/start", {
+      formData: {
+        zone: "0",
+        mode: "development"
+      }
+    });
+  }
+
+  public stop(): Promise<Response> {
+    return this._request("POST", "/run/stop");
   }
 
   public resetLog(): void {
@@ -23,9 +71,7 @@ export default class ShepherdService {
   }
 
   private _getCompleteLog(): Promise<string> {
-    return this._http.get("/run/output").then((res: axios.AxiosResponse) => {
-      return res.data;
-    });
+    return this._request("GET", "/run/output").then(res => res.body);
   }
 
   public async getLog(): Promise<ILog> {

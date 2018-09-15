@@ -9,7 +9,7 @@ export default class ZipperService {
   private _zipInputPath: string;
   private _zipInputMainPath: string;
 
-  constructor(private context: ExtensionContext) {
+  constructor(context: ExtensionContext) {
     this._tmpPath = context.asAbsolutePath("tmp");
     this._zipPath = context.asAbsolutePath(path.join("tmp", "code.zip"));
     this._zipInputPath = context.asAbsolutePath(path.join("tmp", "zip"));
