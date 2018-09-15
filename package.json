@@ -2,8 +2,9 @@
   "name": "vscode-sheep",
   "displayName": "Sheep",
   "description": "VS Code Extension for Controlling Robots",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "MrBBot",
+  "repository": "systemetric/vscode-sheep",
   "engines": {
     "vscode": "^1.27.0"
   },
@@ -30,6 +31,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
+    "package": "vsce package --yarn",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "shepherd": "shepherd",
@@ -43,6 +45,7 @@
     "mock-shepherd": "github:systemetric/mock-shepherd",
     "tslint": "^5.8.0",
     "typescript": "^2.6.1",
+    "vsce": "^1.48.0",
     "vscode": "^1.1.21"
   },
   "dependencies": {
