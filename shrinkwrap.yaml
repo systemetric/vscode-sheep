@@ -7,7 +7,7 @@ devDependencies:
   '@types/fs-extra': 5.0.4
   '@types/node': 8.10.29
   '@types/request': 2.47.1
-  mock-shepherd: github.com/systemetric/mock-shepherd/8d8ae03d5522b0604af52e2221970140471e5568
+  mock-shepherd: github.com/systemetric/mock-shepherd/cf748c030e11f8a3c8f5c2975ca09e068ed276e1
   tslint: 5.11.0
   typescript: 2.9.2
   vscode: 1.1.21
@@ -2667,7 +2667,7 @@ packages:
       node: '>= 6'
     resolution:
       integrity: sha512-c+eUhhkDpaK87G/py74wvWLtz2kzMPNCCkUApkun50ssE0oQliIQzWpTnwjB+MTKVIf2tGzIgHyqW/Y+W77ecQ==
-  github.com/systemetric/mock-shepherd/8d8ae03d5522b0604af52e2221970140471e5568:
+  github.com/systemetric/mock-shepherd/cf748c030e11f8a3c8f5c2975ca09e068ed276e1:
     dependencies:
       canvas: 2.0.0-alpha.14
       express: 4.16.3
@@ -2678,7 +2678,7 @@ packages:
     hasBin: true
     name: mock-shepherd
     resolution:
-      tarball: 'https://codeload.github.com/systemetric/mock-shepherd/tar.gz/8d8ae03d5522b0604af52e2221970140471e5568'
+      tarball: 'https://codeload.github.com/systemetric/mock-shepherd/tar.gz/cf748c030e11f8a3c8f5c2975ca09e068ed276e1'
     version: 1.0.0
 registry: 'https://registry.npmjs.org/'
 shrinkwrapMinorVersion: 9

@@ -20,7 +20,7 @@ export default class ShepherdService {
   private _currentLog: string = "";
 
   constructor() {
-    this._baseURL = "http://localhost:4000";
+    this._baseURL = "http://robot.sr";
     this._http = requestDefaults({
       baseUrl: this._baseURL
     });
