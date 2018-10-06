@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="img" style="width: 300px; height: 300px; background-size: contain; background-position: center;"></div>
+  <input type="text" id="url">
+  <button onclick="fetchImage()">Fetch</button>
+
+  <script>
+
+    const img = document.getElementById("img");
+    const text = document.getElementById("url");
+
+
+    function fetchImage() {
+      const image = new Image();
+
+      image.onload = function () {
+        img.style.backgroundImage = `url("${this.src}")`;
+      }
+
+      const url = text.value;
+      text.value = "";
+      console.log(url);
+      image.url = url;
+    }
+
+
+  </script>
+</body>
+
+</html>

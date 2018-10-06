@@ -11,6 +11,7 @@ import * as path from "path";
 
 export default class LogViewService implements Disposable {
   private _panel: WebviewPanel | undefined;
+  private _imageLoadTimeoutHandle: NodeJS.Timer | undefined;
   private _logViewHTML: string = "";
 
   constructor(
@@ -18,6 +19,7 @@ export default class LogViewService implements Disposable {
     private shepherd: ShepherdService
   ) {
     this._panel = undefined;
+    this._imageLoadTimeoutHandle = undefined;
     this._updateLogViewHTML();
   }
 
@@ -38,8 +40,27 @@ export default class LogViewService implements Disposable {
     }
   }
 
+  private _clearImageLoadTimeout(): void {
+    if (this._imageLoadTimeoutHandle !== undefined) {
+      clearTimeout(this._imageLoadTimeoutHandle);
+      this._imageLoadTimeoutHandle = undefined;
+    }
+  }
+
+  private _updateImage(): void {
+    this._clearImageLoadTimeout();
+
+    this._postMessage("image", this.shepherd.getPhotoURL());
+
+    this._imageLoadTimeoutHandle = setTimeout(() => {
+      console.log("Unable to load image, so loading it again");
+      this._updateImage();
+    }, 3000);
+  }
+
   public showNoConnection(): void {
     this._postMessage("no-connection");
+    this._clearImageLoadTimeout();
   }
 
   public show(): void {
@@ -54,7 +75,8 @@ export default class LogViewService implements Disposable {
         ViewColumn.Two,
         {
           /*This is pretty dangerous, but it's a private extension, and it's not
-          like people are going to put script tags in their logs... right?*/
+          like people are going to put script tags in their logs... right?
+          (note to self, put script tags in logs)*/
           enableScripts: true
         }
       );
@@ -75,7 +97,7 @@ export default class LogViewService implements Disposable {
             }
             break;
           case "request-image":
-            this._postMessage("image", this.shepherd.getPhotoURL());
+            this._updateImage();
             break;
         }
       });

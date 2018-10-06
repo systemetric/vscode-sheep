@@ -116,6 +116,6 @@ export default class ShepherdService {
   }
 
   public getPhotoURL(): string {
-    return `${this._baseURL}/static/output.jpg?no-cache=${Date.now()}`;
+    return `${this._baseURL}/static/image.jpg?no-cache=${Date.now()}`;
   }
 }

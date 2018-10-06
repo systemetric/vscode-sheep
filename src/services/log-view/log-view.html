@@ -146,7 +146,7 @@
      * MESSAGE HANDLING
      */
     function sendRequestMessage(type) {
-      setTimeout(() => vscode.postMessage({ event: `request-${type}` }), 500);
+      setTimeout(() => vscode.postMessage({ event: `request-${type}` }), type === "image" ? 1500 : 500);
     }
 
     window.addEventListener("message", e => {
